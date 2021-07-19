@@ -2,9 +2,9 @@
  * PptxGenJS: XML Generation
  */
 
-import { IImage } from 'image-size/dist/types/interface'
 import {
 	BULLET_TYPES,
+	ChartExType,
 	CRLF,
 	DEF_BULLET_MARGIN,
 	DEF_CELL_MARGIN_PT,
@@ -18,17 +18,19 @@ import {
 	SLIDE_OBJECT_TYPES,
 } from './core-enums'
 import {
+	ChartExOpts,
 	IChartOpts,
 	ImageProps,
 	IPresentationProps,
 	ISlideObject,
 	ISlideRel,
 	ISlideRelChart,
+	ISlideRelChartEx,
 	ISlideRelMedia,
 	ObjectOptions,
 	PresSlide,
 	ShadowProps,
-	SlideLayout,
+	SlideLayout, SunburstChartExOpts,
 	TableCell,
 	TableCellProps,
 	TextProps,
@@ -626,6 +628,40 @@ function slideObjectToXml(slide: PresSlide | SlideLayout): string {
 				strSlideXml += '</p:graphicFrame>'
 				break
 
+			case SLIDE_OBJECT_TYPES.chartEx:
+				let chartExOpts = slideItemObj.options as ChartExOpts
+				if (chartExOpts.type === ChartExType.sunburst) {
+					strSlideXml += '<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">'
+					strSlideXml += '	<mc:Choice xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex" Requires="cx1">'
+					strSlideXml += '		<p:graphicFrame>'
+					strSlideXml += '			<p:nvGraphicFramePr>'
+					strSlideXml += `				<p:cNvPr id="${idx + 2}" name="Extended Chart ${idx + 1}">`
+					strSlideXml += '					<a:extLst>'
+					strSlideXml += '						<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">'
+					strSlideXml += '							<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{'  + getUuid('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx') +  '}"/>'
+					strSlideXml += '						</a:ext>'
+					strSlideXml += '					</a:extLst>'
+					strSlideXml += '				</p:cNvPr>'
+					strSlideXml += '				<p:cNvGraphicFramePr/>'
+					strSlideXml += '				<p:nvPr>'
+					strSlideXml += '					<p:extLst>'
+					strSlideXml += '						<p:ext uri="{D42A27DB-BD31-4B8C-83A1-F6EECF244321}">'
+					strSlideXml += `							<p14:modId xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" val="479373619"/>`
+					strSlideXml += '						</p:ext>'
+					strSlideXml += '					</p:extLst>'
+					strSlideXml += '				</p:nvPr>'
+					strSlideXml += '			</p:nvGraphicFramePr>'
+					strSlideXml += ` 			<p:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></p:xfrm>`
+					strSlideXml += '			<a:graphic>'
+					strSlideXml += '				<a:graphicData uri="http://schemas.microsoft.com/office/drawing/2014/chartex">'
+					strSlideXml += `					<cx:chart xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId${slideItemObj.chartRid}"/>`
+					strSlideXml += '				</a:graphicData>'
+					strSlideXml += '			</a:graphic>'
+					strSlideXml += '		</p:graphicFrame>'
+					strSlideXml += '	</mc:Choice>'
+					strSlideXml += '</mc:AlternateContent>'
+				}
+				break
 			default:
 				strSlideXml += ''
 				break
@@ -741,6 +777,10 @@ function slideObjectRelationsToXml(slide: PresSlide | SlideLayout, defaultRels: 
 	;(slide._relsChart || []).forEach((rel: ISlideRelChart) => {
 		lastRid = Math.max(lastRid, rel.rId)
 		strXml += '<Relationship Id="rId' + rel.rId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="' + rel.Target + '"/>'
+	})
+	;(slide._relsChartEx || []).forEach((rel: ISlideRelChartEx) => {
+		lastRid = Math.max(lastRid, rel.rId)
+		strXml += '<Relationship Id="rId' + rel.rId + '" Type="http://schemas.microsoft.com/office/2014/relationships/chartEx" Target="' + rel.Target + '"/>'
 	})
 	;(slide._relsMedia || []).forEach((rel: ISlideRelMedia) => {
 		lastRid = Math.max(lastRid, rel.rId)
@@ -1367,6 +1407,14 @@ export function makeXmlContTypes(slides: PresSlide[], slideLayouts: SlideLayout[
 		slide._relsChart.forEach(rel => {
 			strXml += ' <Override PartName="' + rel.Target + '" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>'
 		})
+		// Add extended charts if any
+		slide._relsChartEx.forEach(rel => {
+			if (rel.type === ChartExType.sunburst) {
+				strXml += ' <Override PartName="' + rel.Target + '" ContentType="application/vnd.ms-office.chartex+xml"/>'
+				strXml += `<Override ContentType="application/vnd.ms-office.chartstyle+xml" PartName="/ppt/charts/style${rel.globalId}.xml"/>`
+				strXml += `<Override ContentType="application/vnd.ms-office.chartcolorstyle+xml" PartName="/ppt/charts/colors${rel.globalId}.xml"/>`
+			}
+		})
 	})
 
 	// STEP 3: Core PPT
@@ -1384,6 +1432,9 @@ export function makeXmlContTypes(slides: PresSlide[], slideLayouts: SlideLayout[
 		;(layout._relsChart || []).forEach(rel => {
 			strXml += ' <Override PartName="' + rel.Target + '" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>'
 		})
+		;(layout._relsChartEx || []).forEach(rel => {
+			strXml += ' <Override PartName="' + rel.Target + '" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>'
+		})
 	})
 
 	// STEP 5: Add notes slide(s)
@@ -1396,6 +1447,9 @@ export function makeXmlContTypes(slides: PresSlide[], slideLayouts: SlideLayout[
 
 	// STEP 6: Add rels
 	masterSlide._relsChart.forEach(rel => {
+		strXml += ' <Override PartName="' + rel.Target + '" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>'
+	})
+	masterSlide._relsChartEx.forEach(rel => {
 		strXml += ' <Override PartName="' + rel.Target + '" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>'
 	})
 	masterSlide._relsMedia.forEach(rel => {

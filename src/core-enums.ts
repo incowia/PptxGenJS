@@ -115,6 +115,9 @@ export enum ChartType {
 	'radar' = 'radar',
 	'scatter' = 'scatter',
 }
+export enum ChartExType {
+	'sunburst' = 'sunburst'
+}
 export enum ShapeType {
 	'accentBorderCallout1' = 'accentBorderCallout1',
 	'accentBorderCallout2' = 'accentBorderCallout2',
@@ -720,6 +723,7 @@ export enum MASTER_OBJECTS {
 
 export enum SLIDE_OBJECT_TYPES {
 	'chart' = 'chart',
+	'chartEx' = 'chartEx',
 	'hyperlink' = 'hyperlink',
 	'image' = 'image',
 	'media' = 'media',

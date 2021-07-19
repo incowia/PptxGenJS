@@ -42,6 +42,13 @@ export function doAppStart() {
 			);
 			$("#infoBar").append(
 				"<div class='col-auto text-success text-nowrap'><span style='cursor:help' title='" +
+				Object.keys(pptx.ChartExType).join(" | ") +
+				"'><div class='iconSvg size24 circle check'></div>pptx.ChartExType = " +
+				Object.keys(pptx.ChartExType).length +
+				"</span></div>"
+			);
+			$("#infoBar").append(
+				"<div class='col-auto text-success text-nowrap'><span style='cursor:help' title='" +
 					Object.keys(pptx.SchemeColor).join(" | ") +
 					"'><div class='iconSvg size24 circle check'></div>pptx.SchemeColor = " +
 					Object.keys(pptx.SchemeColor).length +

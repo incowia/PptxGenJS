@@ -22,7 +22,7 @@ import {
 	TextPropsOptions,
 	MediaProps,
 	ShapeProps,
-	TableRow,
+	TableRow, SunburstChartExData, ChartExOpts, ISlideRelChartEx,
 } from './core-interfaces'
 import * as genObj from './gen-objects'
 
@@ -35,6 +35,7 @@ export default class Slide {
 	public _presLayout: PresLayout
 	public _rels: ISlideRel[]
 	public _relsChart: ISlideRelChart[]
+	public _relsChartEx: ISlideRelChartEx[]
 	public _relsMedia: ISlideRelMedia[]
 	public _rId: number
 	public _slideId: number
@@ -60,6 +61,7 @@ export default class Slide {
 		this._rId = params.slideRId
 		this._rels = []
 		this._relsChart = []
+		this._relsChartEx = []
 		this._relsMedia = []
 		this._setSlideNum = params.setSlideNum
 		this._slideId = params.slideId
@@ -157,6 +159,18 @@ export default class Slide {
 		let optionsWithType: IChartOptsLib = options || {}
 		optionsWithType._type = type
 		genObj.addChartDefinition(this, type, data, options)
+		return this
+	}
+
+	/**
+	 * Add extended chart to Slide
+	 * @param {ChartExType} type - extended chart type
+	 * @param {SunburstChartExData} data - data object
+	 * @param {ChartExOpts} options - extended chart options
+	 * @return {Slide} this Slide
+	 */
+	addChartEx(data: SunburstChartExData | any, options: ChartExOpts): Slide {
+		genObj.addChartExDefinition(this, data, options)
 		return this
 	}
 

@@ -6,12 +6,12 @@ import {
 	BARCHART_COLORS,
 	CHART_NAME,
 	CHART_TYPE,
+	ChartExType,
 	DEF_CELL_BORDER,
 	DEF_CELL_MARGIN_PT,
 	DEF_FONT_COLOR,
 	DEF_FONT_SIZE,
 	DEF_SHAPE_LINE_COLOR,
-	DEF_SLIDE_BKGD,
 	DEF_SLIDE_MARGIN_IN,
 	EMU,
 	IMG_PLAYBTN,
@@ -25,10 +25,11 @@ import {
 } from './core-enums'
 import {
 	BackgroundProps,
+	ChartExOpts,
 	IChartMulti,
 	IChartOptsLib,
-	ISlideObject,
 	ImageProps,
+	ISlideObject,
 	MediaProps,
 	OptsChartGridLine,
 	PresLayout,
@@ -37,15 +38,16 @@ import {
 	ShapeProps,
 	SlideLayout,
 	SlideMasterProps,
+	SunburstChartExData,
 	TableCell,
 	TableProps,
 	TableRow,
 	TextProps,
 	TextPropsOptions,
 } from './core-interfaces'
-import { getSlidesForTableRows } from './gen-tables'
-import { getSmartParseNumber, inch2Emu, encodeXmlEntities, getNewRelId, valToPts } from './gen-utils'
-import { correctShadowOptions } from './gen-xml'
+import {getSlidesForTableRows} from './gen-tables'
+import {encodeXmlEntities, getNewRelId, getSmartParseNumber, inch2Emu, valToPts} from './gen-utils'
+import {correctShadowOptions} from './gen-xml'
 
 /** counter for included charts (used for index in their filenames) */
 let _chartCounter: number = 0
@@ -330,6 +332,41 @@ export function addChartDefinition(target: PresSlide, type: CHART_NAME | IChartM
 		Target: '/ppt/charts/chart' + chartId + '.xml',
 	})
 
+	target._slideObjects.push(resultObject)
+	return resultObject
+}
+
+export function addChartExDefinition(target: PresSlide, data: SunburstChartExData | any, options: ChartExOpts): object {
+	let chartId = ++_chartCounter
+	let resultObject = {
+		_type: null,
+		text: null,
+		options: null,
+		chartRid: null,
+	}
+
+	if (options.type !== ChartExType.sunburst) {
+		console.warn("Only extended chart of type sunburst available.");
+		return;
+	}
+	let tempOpts = options
+	tempOpts.x = typeof options.x !== 'undefined' && options.x != null && !isNaN(Number(options.x)) ? options.x : 1
+	tempOpts.y = typeof options.y !== 'undefined' && options.y != null && !isNaN(Number(options.y)) ? options.y : 1
+	tempOpts.w = options.w || '50%'
+	tempOpts.h = options.h || '50%'
+
+	resultObject._type = SLIDE_OBJECT_TYPES.chartEx
+	resultObject.options = options
+	resultObject.chartRid = getNewRelId(target)
+	target._relsChartEx.push({
+		rId: getNewRelId(target),
+		data: data,
+		opts: tempOpts,
+		type: options.type,
+		globalId: chartId,
+		fileName: SLIDE_OBJECT_TYPES.chartEx + chartId + '.xml',
+		Target: '/ppt/charts/' + SLIDE_OBJECT_TYPES.chartEx + chartId + '.xml'
+	})
 	target._slideObjects.push(resultObject)
 	return resultObject
 }

@@ -2,7 +2,16 @@
  * PptxGenJS Interfaces
  */
 
-import { CHART_NAME, PLACEHOLDER_TYPE, SHAPE_NAME, SLIDE_OBJECT_TYPES, TEXT_HALIGN, TEXT_VALIGN, WRITE_OUTPUT_TYPE } from './core-enums'
+import {
+	CHART_NAME,
+	ChartExType,
+	PLACEHOLDER_TYPE,
+	SHAPE_NAME,
+	SLIDE_OBJECT_TYPES,
+	TEXT_HALIGN,
+	TEXT_VALIGN,
+	WRITE_OUTPUT_TYPE
+} from './core-enums'
 
 // Core Types
 // ==========
@@ -1321,6 +1330,61 @@ export interface ISlideRelChart extends OptsChartData {
 	fileName: string
 }
 
+// Chartex
+export interface SunburstChartExData {
+	name?: string
+	values?: (string | number)[][]
+}
+
+export type SunburstChartExProps = {
+	fill?: ShapeFillProps
+	line?: ShapeLineProps
+	text?: {
+		fill?: ShapeFillProps
+		line?: ShapeLineProps
+	}
+	dataLabel?: {
+		// default: ''
+		numFmt?: string // see https://support.microsoft.com/en-us/office/number-format-codes-5026bbd6-04bc-48cd-bf33-80f18b4eae68
+		visibility?: {
+			// default: false
+			series?: boolean
+			// default: true
+			category?: boolean
+			// default: false
+			value?: boolean
+		}
+		// default: ', '
+		separator?: string
+	}
+}
+
+export interface SunburstSegmentChartExProps extends SunburstChartExProps {
+	path: string[]
+}
+
+export interface SunburstChartExOpts extends SunburstChartExProps {
+	segments?: SunburstSegmentChartExProps[]
+}
+
+export interface ChartExOpts extends PositionProps {
+	type: ChartExType
+	title?: IChartPropsTitle
+	legend?: IChartPropsLegend
+	sunburst?: SunburstChartExOpts
+}
+
+export interface ISlideRelChartEx extends ChartExOpts {
+	type: ChartExType
+	data: SunburstChartExData
+	opts: ChartExOpts
+	// internal below
+	rId: number
+	Target: string
+	globalId: number
+	fileName: string
+}
+
 // Core
 // ====
 // PRIVATE vvv
@@ -1467,6 +1531,7 @@ export interface SlideBaseProps {
 	_presLayout: PresLayout
 	_rels: ISlideRel[]
 	_relsChart: ISlideRelChart[] // needed as we use args:"PresSlide|SlideLayout" often
+	_relsChartEx: ISlideRelChartEx[]
 	_relsMedia: ISlideRelMedia[] // needed as we use args:"PresSlide|SlideLayout" often
 	_slideNum: number
 	_slideNumberProps?: SlideNumberProps
@@ -1492,6 +1557,7 @@ export interface PresSlide extends SlideBaseProps {
 	_slideId: number
 
 	addChart: Function
+	addChartEx: Function
 	addImage: Function
 	addMedia: Function
 	addNotes: Function

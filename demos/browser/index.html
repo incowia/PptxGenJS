@@ -49,6 +49,7 @@
 		$('#btnRunAllDemos').click(() => runAllDemos());
 		//
 		$('#btnGenFunc_Chart').click(() => execGenSlidesFunc('Chart'));
+		$('#btnGenFunc_ChartEx').click(() => execGenSlidesFunc('ChartEx'));
 		$('#btnGenFunc_Image').click(() => execGenSlidesFunc('Image'));
 		$('#btnGenFunc_Media').click(() => execGenSlidesFunc('Media'));
 		$('#btnGenFunc_Shape').click(() => execGenSlidesFunc('Shape'));
@@ -144,6 +145,10 @@
 			<li class="nav-item">
 				<a class="nav-link text-uppercase" id="charts-tab" data-toggle="tab" href="#charts" onclick="location.href='#charts'" role="tab" aria-controls="charts"
 					aria-selected="false">Charts</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link text-uppercase" id="chartexs-tab" data-toggle="tab" href="#chartexs" onclick="location.href='#chartexs'" role="tab" aria-controls="chartexs"
+				   aria-selected="false">Extended Charts</a>
 			</li>
 			<li class="nav-item">
 				<a class="nav-link text-uppercase" id="images-tab" data-toggle="tab" href="#images" onclick="location.href='#images'" role="tab" aria-controls="images"
@@ -630,6 +635,24 @@
 				</div>
 				<div class="text-center">
 					<button id="btnGenFunc_Chart" type="button" class="btn btn-success w-25">Generate Chart Demo</button>
+				</div>
+			</div>
+			<div class="tab-pane shadow p-4" id="chartexs" role="tabpanel" aria-labelledby="chartexs-tab">
+				<h4 class="text-primary">Extended Chart Demos</h4>
+				<p>
+					View the <a href="https://gitbrent.github.io/PptxGenJS/docs/api-chartexs" target="_blank">extended chart documentation</a> for full details and examples
+				</p>
+				<div class="d-flex flex-wrap mb-1">
+					<div class="card mr-4 mb-4 flex-grow-1">
+						<h6 class="card-header">Sunburst Chart</h6>
+						<div class="card-body text-nowrap">
+							<div>Slide 1 - <span>Default example in MS PowerPoint (only leafs)</span></div>
+							<div>Slide 2 - <span>Default example in MS PowerPoint (entire trees)</span></div>
+						</div>
+					</div>
+				</div>
+				<div class="text-center">
+					<button id="btnGenFunc_ChartEx" type="button" class="btn btn-success w-25">Generate Extended Chart Demo</button>
 				</div>
 			</div>
 			<div class="tab-pane shadow p-4" id="images" role="tabpanel" aria-labelledby="images-tab">

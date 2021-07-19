@@ -66,6 +66,7 @@ import {
 	AlignV,
 	CHART_TYPE,
 	ChartType,
+	ChartExType,
 	DEF_PRES_LAYOUT,
 	DEF_PRES_LAYOUT_NAME,
 	DEF_SLIDE_MARGIN_IN,
@@ -92,12 +93,13 @@ import {
 	WriteProps,
 } from './core-interfaces'
 import * as genCharts from './gen-charts'
+import * as genChartsEx from './gen-chartex'
 import * as genObj from './gen-objects'
 import * as genMedia from './gen-media'
 import * as genTable from './gen-tables'
 import * as genXml from './gen-xml'
 
-const VERSION = '3.7.0-beta-20210705-1510'
+const VERSION = '3.7.0-beta'
 
 export default class PptxGenJS implements IPresentationProps {
 	// Property getters/setters
@@ -244,6 +246,10 @@ export default class PptxGenJS implements IPresentationProps {
 	public get ChartType(): typeof ChartType {
 		return this._chartType
 	}
+	private _chartExType = ChartExType
+	public get ChartExType(): typeof ChartExType {
+		return this._chartExType
+	}
 	private _outputType = OutputType
 	public get OutputType(): typeof OutputType {
 		return this._outputType
@@ -315,6 +321,7 @@ export default class PptxGenJS implements IPresentationProps {
 				_presLayout: this._presLayout,
 				_rels: [],
 				_relsChart: [],
+				_relsChartEx: [],
 				_relsMedia: [],
 				_slide: null,
 				_slideNum: 1000,
@@ -326,6 +333,7 @@ export default class PptxGenJS implements IPresentationProps {
 		this._sections = []
 		this._masterSlide = {
 			addChart: null,
+			addChartEx: null,
 			addImage: null,
 			addMedia: null,
 			addNotes: null,
@@ -338,6 +346,7 @@ export default class PptxGenJS implements IPresentationProps {
 			_rId: null,
 			_rels: [],
 			_relsChart: [],
+			_relsChartEx: [],
 			_relsMedia: [],
 			_slideId: null,
 			_slideLayout: null,
@@ -392,6 +401,7 @@ export default class PptxGenJS implements IPresentationProps {
 	 */
 	private createChartMediaRels = (slide: PresSlide | SlideLayout, zip: JSZip, chartPromises: Promise<any>[]) => {
 		slide._relsChart.forEach(rel => chartPromises.push(genCharts.createExcelWorksheet(rel, zip)))
+		slide._relsChartEx.forEach(rel => chartPromises.push(genChartsEx.createExcelWorksheet(rel, zip)))
 		slide._relsMedia.forEach(rel => {
 			if (rel.type !== 'online' && rel.type !== 'hyperlink') {
 				// A: Loop vars
@@ -646,6 +656,7 @@ export default class PptxGenJS implements IPresentationProps {
 			_presLayout: this.presLayout,
 			_rels: [],
 			_relsChart: [],
+			_relsChartEx: [],
 			_relsMedia: [],
 			_slideNum: this.slides.length + 1,
 		}
@@ -730,6 +741,7 @@ export default class PptxGenJS implements IPresentationProps {
 			_presLayout: this.presLayout,
 			_rels: [],
 			_relsChart: [],
+			_relsChartEx: [],
 			_relsMedia: [],
 			_slide: null,
 			_slideNum: 1000 + this.slideLayouts.length + 1,
