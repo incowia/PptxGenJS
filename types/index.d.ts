@@ -23,6 +23,7 @@ declare class PptxGenJS {
 	readonly AlignH: typeof PptxGenJS.AlignH
 	readonly AlignV: typeof PptxGenJS.AlignV
 	readonly ChartType: typeof PptxGenJS.ChartType
+	readonly ChartExType: typeof PptxGenJS.ChartExType
 	readonly OutputType: typeof PptxGenJS.OutputType
 	readonly SchemeColor: typeof PptxGenJS.SchemeColor
 	readonly ShapeType: typeof PptxGenJS.ShapeType
@@ -162,6 +163,9 @@ declare namespace PptxGenJS {
 		'pie' = 'pie',
 		'radar' = 'radar',
 		'scatter' = 'scatter',
+	}
+	export enum ChartExType {
+		'sunburst' = 'sunburst'
 	}
 	export enum OutputType {
 		'arraybuffer' = 'arraybuffer',

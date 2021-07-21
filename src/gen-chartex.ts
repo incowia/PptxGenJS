@@ -196,21 +196,32 @@ export function createExcelWorksheet(chartExObject: ISlideRelChartEx, zip: JSZip
 					]
 				}
 				*/
-				/* EX: OUTPUT: scatterChart Worksheet:
-					-|------------|----------|----------|----------| Datenreihe1
-					1| 'Branch 1' | 'Root 1' | 'Leaf 1' | Blatt 1  | 22
-					1| 'Branch 1' | 'Root 1' | 'Leaf 2' | Blatt 2  | 12
-					1| 'Branch 1' | 'Root 1' | 'Leaf 3' | Blatt 3  | 18
-					1| 'Branch 1' | 'Root 2' | 'Leaf 4' |          | 87
-					1| 'Branch 1' | 'Root 2' | 'Leaf 5' | Blatt 5  | 88
-					1| 'Branch 1' | 'Leaf 6' |          |          | 17
-					-|------------|----------|----------|----------|--------------
+				/* EX: OUTPUT: sunburst chart Worksheet:
+					--|------------|-----------|-----------| Datenreihe1
+					 1| 'Branch 1' | 'Root 1'  | 'Leaf 1'  | 22
+					 2| 'Branch 1' | 'Root 1'  | 'Leaf 2'  | 12
+					 3| 'Branch 1' | 'Root 1'  | 'Leaf 3'  | 18
+					 4| 'Branch 1' | 'Root 2'  | 'Leaf 4'  | 87
+					 5| 'Branch 1' | 'Root 2'  | 'Leaf 5'  | 88
+					 6| 'Branch 1' | 'Leaf 6'  |  ''       | 17
+					 7| 'Branch 1' | 'Leaf 7'  |  ''       | 14
+					 8| 'Branch 2' | 'Root 3'  | 'Leaf 8'  | 25
+					 9| 'Branch 2' | 'Leaf 9'  | ''        | 16
+					10| 'Branch 2' | 'Root 4'  | 'Leaf 10' | 24
+					11| 'Branch 2' | 'Root 4'  | 'Leaf 11' | 89
+					12| 'Branch 3' | 'Root 5'  | 'Leaf 12' | 16
+					13| 'Branch 3' | 'Root 5'  | 'Leaf 13' | 19
+					14| 'Branch 3' | 'Root 6'  | 'Leaf 14' | 86
+					15| 'Branch 3' | 'Root 6'  | 'Leaf 15' | 23
+					16| 'Branch 3' | 'Leaf 16' | ''        | 21
+					--|------------|-----------|-----------|-----------
 				*/
 				// generate rows
 				const {rowsData, colsData} = getRowsAndColumnsData(data)
 				const {labels, uniqueLabels} = getLabels(rowsData)
 				const colCount = colsData.length
 				const values = colsData[colsData.length - 1]
+				console.log('values', values)
 				strSheetXml += '<sheetData>'
 				strSheetXml += `<row r="1" spans="1:${colCount}" x14ac:dyDescent="0.25"><c r="${LETTERS[colCount - 1]}1" t="s"><v>0</v></c></row>`
 				// TODO uniqueLabel-Index ermitteln als v
@@ -358,9 +369,30 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 	strXml += '     </cx:tx>'
 	// colors for data points
 	if (chartExObject.opts.sunburst && chartExObject.opts.sunburst.segments) {
-		chartExObject.opts.sunburst.segments.forEach((segment, iColor) => {
+		chartExObject.opts.sunburst.segments.forEach((segment) => {
+			console.log('segment.path', segment.path)
+			// get data point index of path
+			const colCount = segment.path.length - 1
+			let idx = rowsData.slice().reduce((acc, row, rowIdx) => {
+				console.log('row', rowIdx, row)
+				if (acc === -1) {
+					for (let i=0; i <= colCount; i++) {
+						if (row[i] === segment.path[i]) {
+							if (i === colCount) {
+								acc = rowIdx + ((colsData.length - 2) * rowIdx)
+							}
+						}
+					}
+				}
+				return acc
+			}, -1)
+			const labels = getLabels(rowsData).labels
+			const emptyLabelsCount = labels.slice(0, idx).filter((l) => {
+				return l === ''
+			}).length
+			console.log('idx', idx)
 			if (segment.fill) {
-				strXml += `<cx:dataPt idx="${iColor}">`
+				strXml += `<cx:dataPt idx="${idx - emptyLabelsCount}">`
 				strXml += '	<cx:spPr>'
 				strXml += '		<a:solidFill>'
 				strXml += `			${createColorElement(segment.fill.color)}`
@@ -381,6 +413,9 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 	}
 	console.log('chartExObject', chartExObject)
 	strXml += '     <cx:dataLabels pos="ctr">'
+	if (chartExObject.opts.sunburst.dataLabel.numFmt) {
+		strXml += `      <cx:numFmt formatCode="${chartExObject.opts.sunburst.dataLabel.numFmt}" sourceLinked="0"/>`
+	}
 	strXml += `      <cx:visibility seriesName="0" categoryName="${(chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility.category) ? 1 : 0}" value="${(chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility.value) ? 1 : 0}"/>` // show only value with categoryName="0" value="1"
 	strXml += '     </cx:dataLabels>'
 	strXml += '     <cx:dataId val="0"/>'
@@ -414,7 +449,7 @@ function getRowsAndColumnsData(data: SunburstChartExData) {
 	for (let i = 0; i < colCount; i++) {
 		let col = []
 		rowsData.forEach((row) => {
-			col.push(row[i] ? row[i] : '')
+			col.push(row[i] || typeof row[i] === 'number' ? row[i] : '')
 		})
 		colsData.push(col)
 	}
