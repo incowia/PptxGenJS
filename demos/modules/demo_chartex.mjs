@@ -3,7 +3,7 @@
  * AUTH: incowia GmbH (https://github.com/incowia/)
  * DESC: Common test/demo slides for all library features
  * DEPS: Used by various demos (./demos/browser, ./demos/node, etc.)
- * VER.: 3.7.0-beta
+ * VER.: 3.8.0-beta
  * BLD.:
  */
 
@@ -208,7 +208,47 @@ function genSlide03(pptx) {
 				visibility: {
 					category: true,
 					value: true
+				},
+				fontSize: 10
+			},
+			segments: [
+				{
+					path: ['Branch 3'],
+					dataLabel: { numFmt: '"foo";"foo"' /* static string */ }
+				}, {
+					path: ['Branch 2'],
+					dataLabel: { visibility: { category: false } }
+				}, {
+					path: ['Branch 1', 'Root 1'],
+					dataLabel: { visibility: { category: false, value: false } },
+					fill: { type: 'solid', color: 'FF0000' },
+					text: { fill: { type: 'solid', color: 'FF0000' } }
+				}, {
+					path: ['Branch 2', 'Root 4', 'Leaf 11'],
+					fill: { type: 'solid', color: 'FFFFFF' },
+					line: { width: 1, color: '000000' },
+					text: { fill: { type: 'solid', color: '000000' } },
+					dataLabel: { fontSize: 13 }
 				}
+			]
+		}
+	};
+	slide.addChartEx(data2, chartEx5Options);
+
+	const chartEx6Options = {
+		type: pptx.ChartExType.sunburst,
+		x: 6.7,
+		y: 1.0,
+		w: 6.0,
+		h: 6.0,
+		sunburst: {
+			dataLabel: {
+				numFmt: '0;0', // shows absolute number only
+				visibility: {
+					category: true,
+					value: true
+				},
+				separator: '\n'
 			},
 			segments: [
 				{
@@ -225,10 +265,15 @@ function genSlide03(pptx) {
 					path: ['Branch 2', 'Root 4', 'Leaf 11'],
 					fill: { type: 'solid', color: 'FFFFFF' },
 					line: { width: 1, color: '000000' },
-					text: { fill: { type: 'solid', color: '000000' } }
+					text: { fill: { type: 'solid', color: '000000' } },
+					dataLabel: {
+						fontSize: 8,
+						separator: ': '
+					}
 				}
 			]
 		}
 	};
-	slide.addChartEx(data2, chartEx5Options);
+	slide.addChartEx(data2, chartEx6Options);
+
 }

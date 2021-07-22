@@ -1371,6 +1371,7 @@ export type SunburstChartExProps = {
 			// default: false
 			value?: boolean
 		}
+		fontSize?: number
 		// default: ', '
 		separator?: string
 	}

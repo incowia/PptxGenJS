@@ -164,7 +164,6 @@ export default class Slide {
 
 	/**
 	 * Add extended chart to Slide
-	 * @param {ChartExType} type - extended chart type
 	 * @param {SunburstChartExData} data - data object
 	 * @param {ChartExOpts} options - extended chart options
 	 * @return {Slide} this Slide

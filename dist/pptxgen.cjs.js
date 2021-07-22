@@ -1,4 +1,4 @@
-/* PptxGenJS 3.7.0-beta @ 2021-07-21T07:02:04.069Z */
+/* PptxGenJS 3.8.0-beta @ 2021-07-22T16:30:03.293Z */
 'use strict';
 
 var JSZip = require('jszip');
@@ -4320,7 +4320,6 @@ var Slide = /** @class */ (function () {
     };
     /**
      * Add extended chart to Slide
-     * @param {ChartExType} type - extended chart type
      * @param {SunburstChartExData} data - data object
      * @param {ChartExOpts} options - extended chart options
      * @return {Slide} this Slide
@@ -6150,6 +6149,7 @@ function createGridLineElement(glOpts) {
 /**
  * PptxGenJS: Extended Chart Generation
  */
+var DEFAULT_DATA_LABEL_FONT_SIZE = 12;
 /**
  * Based on passed data, creates Excel Worksheet that is used as a data source for a extended chart.
  * @param {ISlideRelChartEx} chartExObject - extended chart object
@@ -6330,10 +6330,8 @@ function createExcelWorksheet(chartExObject, zip) {
                 var _f = getLabels(rowsData), labels = _f.labels, uniqueLabels_1 = _f.uniqueLabels;
                 var colCount_1 = colsData_1.length;
                 var values_1 = colsData_1[colsData_1.length - 1];
-                console.log('values', values_1);
                 strSheetXml_1 += '<sheetData>';
                 strSheetXml_1 += "<row r=\"1\" spans=\"1:" + colCount_1 + "\" x14ac:dyDescent=\"0.25\"><c r=\"" + LETTERS[colCount_1 - 1] + "1\" t=\"s\"><v>0</v></c></row>";
-                // TODO uniqueLabel-Index ermitteln als v
                 rowsData.forEach(function (row, i) {
                     strSheetXml_1 += "<row r=\"" + (i + 2) + "\" spans=\"1:" + colCount_1 + "\" x14ac:dyDescent=\"0.25\">";
                     colsData_1.slice(0, colsData_1.length - 1).forEach(function (col, colIdx) {
@@ -6396,6 +6394,67 @@ function createExcelWorksheet(chartExObject, zip) {
             reject(strErr);
         });
     });
+}
+/**
+ * get data point index of segment.path
+ * uses unique labels per row orientation
+ * @param segment
+ * @param rowsData
+ * @param colsData
+ */
+function getDataPointIndex(segment, rowsData) {
+    var colCount = segment.path.length - 1;
+    var idxHorizontal = rowsData.slice().reduce(function (acc, row, rowIdx) {
+        if (acc === -1) {
+            for (var i = 0; i <= colCount; i++) {
+                if (row[i] === segment.path[i]) {
+                    if (i === colCount) {
+                        acc = rowIdx + ((rowsData.length - 1) * i);
+                    }
+                }
+            }
+        }
+        return acc;
+    }, -1);
+    var _a = getLabels(rowsData), labels = _a.labels, uniqueLabels = _a.uniqueLabels;
+    var uniqueIdx = uniqueLabels.slice().reduce(function (acc, ul, i) {
+        if (ul === segment.path[segment.path.length - 1]) {
+            acc = i;
+        }
+        return acc;
+    }, -1);
+    var duplicatedLabelsCount = labels.slice(0, idxHorizontal).length - uniqueLabels.slice(0, uniqueIdx).length;
+    return idxHorizontal - duplicatedLabelsCount;
+}
+/**
+ * get dataLabel index of segment.path
+ * uses labels per column orientation
+ * @param segment
+ * @param rowsData
+ * @param colsData
+ */
+function getDataLabelIndexAndLabel(segment, rowsData, colsData) {
+    var colCount = segment.path.length - 1;
+    var idx = rowsData.slice().reduce(function (acc, row, rowIdx) {
+        if (acc === -1) {
+            for (var i = 0; i <= colCount; i++) {
+                if (row[i] === segment.path[i]) {
+                    if (i === colCount) {
+                        acc = rowIdx + ((rowsData.length - 1) * i);
+                    }
+                }
+            }
+        }
+        return acc;
+    }, -1);
+    var labels = getLabels(colsData).labels;
+    var emptyLabelsCount = labels.slice(0, idx).filter(function (l) {
+        return l === '';
+    }).length;
+    var label = labels.filter(function (label) {
+        return label !== '';
+    })[idx - emptyLabelsCount];
+    return { dataLabelIndex: (idx - emptyLabelsCount), label: label };
 }
 /**
  * Main entry point method for create charts
@@ -6469,53 +6528,158 @@ function makeXmlChartEx(chartExObject) {
     strXml += "        <cx:v>" + encodeXmlEntities(data.name) + "</cx:v>";
     strXml += '      </cx:txData>';
     strXml += '     </cx:tx>';
+    // global line colors
+    if (chartExObject.opts.sunburst.line) {
+        strXml += '     <cx:spPr>';
+        if (chartExObject.opts.sunburst.line.width) {
+            strXml += "      <a:ln w=\"" + chartExObject.opts.sunburst.line.width * 12700 + "\">";
+        }
+        else {
+            strXml += '      <a:ln>';
+        }
+        strXml += '       <a:solidFill>';
+        strXml += "        " + createColorElement(chartExObject.opts.sunburst.line.color);
+        strXml += '       </a:solidFill>';
+        strXml += '      </a:ln>';
+        strXml += '     </cx:spPr>';
+    }
     // colors for data points
     if (chartExObject.opts.sunburst && chartExObject.opts.sunburst.segments) {
         chartExObject.opts.sunburst.segments.forEach(function (segment) {
-            console.log('segment.path', segment.path);
-            // get data point index of path
-            var colCount = segment.path.length - 1;
-            var idx = rowsData.slice().reduce(function (acc, row, rowIdx) {
-                console.log('row', rowIdx, row);
-                if (acc === -1) {
-                    for (var i = 0; i <= colCount; i++) {
-                        if (row[i] === segment.path[i]) {
-                            if (i === colCount) {
-                                acc = rowIdx + ((colsData.length - 2) * rowIdx);
-                            }
-                        }
-                    }
-                }
-                return acc;
-            }, -1);
-            var labels = getLabels(rowsData).labels;
-            var emptyLabelsCount = labels.slice(0, idx).filter(function (l) {
-                return l === '';
-            }).length;
-            console.log('idx', idx);
-            if (segment.fill) {
-                strXml += "<cx:dataPt idx=\"" + (idx - emptyLabelsCount) + "\">";
+            var dataPointIndex = getDataPointIndex(segment, rowsData); // index in unique labels per rows
+            if (segment.fill || segment.line || segment.text) {
+                strXml += "<cx:dataPt idx=\"" + dataPointIndex + "\">";
                 strXml += '	<cx:spPr>';
                 strXml += '		<a:solidFill>';
                 strXml += "\t\t\t" + createColorElement(segment.fill.color);
                 strXml += '		</a:solidFill>';
-                strXml += '     <a:ln w="6350">';
-                strXml += '	     <a:solidFill>';
-                strXml += "\t\t\t" + createColorElement(segment.line ? (segment.line.color || DEF_SHAPE_LINE_COLOR) : DEF_SHAPE_LINE_COLOR, '     <a:lumMod val="20000"/>' +
-                    '     <a:lumOff val="80000"/>');
-                strXml += '	     </a:solidFill>';
-                strXml += '     </a:ln>';
+                if (segment.line || chartExObject.opts.sunburst.line) {
+                    var lineWidth = segment.line ?
+                        (segment.line.width ? (segment.line.width * 12700) :
+                            (chartExObject.opts.sunburst.line ? (chartExObject.opts.sunburst.line.width ? (chartExObject.opts.sunburst.line.width * 12700) : 12700) : -1)) : -1;
+                    if (lineWidth !== -1) {
+                        strXml += "     <a:ln w=\"" + lineWidth + "\">";
+                    }
+                    else {
+                        strXml += "     <a:ln>";
+                    }
+                    strXml += "        <a:solidFill>";
+                    strXml += "         " + createColorElement(segment.line ? (segment.line.color || DEF_SHAPE_LINE_COLOR) : DEF_SHAPE_LINE_COLOR);
+                    strXml += "        </a:solidFill>";
+                    strXml += "     </a:ln>";
+                }
                 strXml += '	</cx:spPr>';
                 strXml += '</cx:dataPt>';
             }
         });
     }
-    console.log('chartExObject', chartExObject);
     strXml += '     <cx:dataLabels pos="ctr">';
-    if (chartExObject.opts.sunburst.dataLabel.numFmt) {
-        strXml += "      <cx:numFmt formatCode=\"" + chartExObject.opts.sunburst.dataLabel.numFmt + "\" sourceLinked=\"0\"/>";
+    // global data label format
+    var globalNumFmt = (chartExObject.opts.sunburst.dataLabel && chartExObject.opts.sunburst.dataLabel.numFmt)
+        ? chartExObject.opts.sunburst.dataLabel.numFmt : null; // string
+    if (globalNumFmt !== null) {
+        strXml += "      <cx:numFmt formatCode=\"" + encodeXmlEntities(globalNumFmt) + "\" sourceLinked=\"0\"/>";
     }
-    strXml += "      <cx:visibility seriesName=\"0\" categoryName=\"" + ((chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility.category) ? 1 : 0) + "\" value=\"" + ((chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility.value) ? 1 : 0) + "\"/>"; // show only value with categoryName="0" value="1"
+    // global text
+    var fontSize = (chartExObject.opts.sunburst.dataLabel)
+        ? (chartExObject.opts.sunburst.dataLabel.fontSize ? (chartExObject.opts.sunburst.dataLabel.fontSize * 100) : (DEFAULT_DATA_LABEL_FONT_SIZE * 100)) : (DEFAULT_DATA_LABEL_FONT_SIZE * 100);
+    strXml += "      <cx:txPr>";
+    strXml += "       <a:bodyPr spcFirstLastPara=\"1\" vertOverflow=\"ellipsis\" horzOverflow=\"overflow\" wrap=\"square\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\" anchor=\"ctr\" anchorCtr=\"1\"/>";
+    strXml += "       <a:lstStyle/>";
+    strXml += "       <a:p>";
+    strXml += "        <a:pPr algn=\"ctr\" rtl=\"0\">";
+    strXml += "         <a:defRPr sz=\"" + fontSize + "\"/>";
+    strXml += "        </a:pPr>";
+    strXml += "        <a:endParaRPr lang=\"de-DE\" sz=\"" + fontSize + "\" b=\"0\" i=\"0\" u=\"none\" strike=\"noStrike\" baseline=\"0\">";
+    if (chartExObject.opts.sunburst.text && chartExObject.opts.sunburst.text.fill) {
+        strXml += "         <a:solidFill>";
+        strXml += "          " + createColorElement(chartExObject.opts.sunburst.text.fill.color ? (chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF');
+        strXml += "         </a:solidFill>";
+    }
+    strXml += "         <a:latin typeface=\"Calibri\" panose=\"020F0502020204030204\"/>";
+    strXml += "        </a:endParaRPr>";
+    strXml += "       </a:p>";
+    strXml += "      </cx:txPr>";
+    // global visibility
+    var globalCategoryVisibility = (chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility
+        && typeof chartExObject.opts.sunburst.dataLabel.visibility.category === 'boolean')
+        ? (!chartExObject.opts.sunburst.dataLabel.visibility.category ? 0 : 1) : null;
+    var globalValueVisibility = (chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility
+        && typeof chartExObject.opts.sunburst.dataLabel.visibility.value === 'boolean')
+        ? (!chartExObject.opts.sunburst.dataLabel.visibility.value ? 0 : 1) : null;
+    var globalSeriesNameVisibility = (chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility
+        && typeof chartExObject.opts.sunburst.dataLabel.visibility.series === 'boolean')
+        ? (!chartExObject.opts.sunburst.dataLabel.visibility.series ? 0 : 1) : null;
+    var globalSeparator = chartExObject.opts.sunburst.dataLabel.separator ? encodeXmlEntities(chartExObject.opts.sunburst.dataLabel.separator) : ', ';
+    if (globalCategoryVisibility !== null || globalValueVisibility != null || globalSeriesNameVisibility != null) {
+        strXml += "      <cx:visibility"
+            + (" seriesName=\"" + (globalSeriesNameVisibility !== null ? globalSeriesNameVisibility : 0) + "\"") // default: series name not visible
+            + (" categoryName=\"" + (globalCategoryVisibility !== null ? globalCategoryVisibility : 1) + "\"") // default: category visible
+            + (" value=\"" + (globalValueVisibility !== null ? globalValueVisibility : 0) + "\"") // default: value not visible
+            + "/>";
+        strXml += "      <cx:separator>" + globalSeparator + "</cx:separator>";
+    }
+    // segment labels
+    if (chartExObject.opts.sunburst && chartExObject.opts.sunburst.segments) {
+        chartExObject.opts.sunburst.segments.forEach(function (segment) {
+            var _a = getDataLabelIndexAndLabel(segment, rowsData, colsData), dataLabelIndex = _a.dataLabelIndex, label = _a.label;
+            var xmlForDataLabelNumFmt = getXmlForSegmentDataLabelNumFmt(segment, globalNumFmt);
+            var xmlForDataLabelVisibility = getXmlSegmentForDataLabelVisibility(segment, globalCategoryVisibility, globalValueVisibility, globalSeriesNameVisibility, globalSeparator);
+            // format and visibility
+            if (segment.dataLabel && (segment.dataLabel.numFmt || segment.dataLabel.visibility)) {
+                strXml += "<cx:dataLabel idx=\"" + dataLabelIndex + "\">";
+                // segment label numFmt
+                strXml += xmlForDataLabelNumFmt;
+                // segment label
+                strXml += '	<cx:txPr>';
+                strXml += '		<a:bodyPr rtlCol="0" anchor="ctr">';
+                strXml += '		    <a:normAutofit fontScale="3000" lnSpcReduction="10000"/>';
+                strXml += '		</a:bodyPr>';
+                strXml += '		<a:lstStyle/>';
+                strXml += '		<a:p>';
+                strXml += '			<a:r>';
+                strXml += "\t\t\t\t<a:t>" + encodeXmlEntities(label) + "</a:t>";
+                strXml += '			</a:r>';
+                strXml += '		</a:p>';
+                strXml += '	</cx:txPr>';
+                strXml += xmlForDataLabelVisibility;
+                strXml += '</cx:dataLabel>';
+            }
+            // label color
+            if (hasLabel(segment, globalCategoryVisibility, globalValueVisibility, globalSeriesNameVisibility)
+                && segment.text && (segment.text.fill || (segment.dataLabel && segment.dataLabel.fontSize))) {
+                var dataPointIndex = getDataPointIndex(segment, rowsData); // index in unique labels per rows - needed for segment text color
+                var segmentFontSize = (segment.dataLabel) ? (segment.dataLabel.fontSize ? (segment.dataLabel.fontSize * 100) : fontSize) : fontSize;
+                strXml += "<cx:dataLabel idx=\"" + dataPointIndex + "\">";
+                // segment label numFmt
+                strXml += xmlForDataLabelNumFmt;
+                strXml += '	<cx:txPr>';
+                strXml += '		<a:bodyPr anchorCtr="1" anchor="ctr" bIns="0" rIns="0" tIns="0" lIns="0" wrap="square" horzOverflow="overflow" vertOverflow="ellipsis" spcFirstLastPara="1"/>';
+                strXml += '		<a:lstStyle/>';
+                strXml += '		<a:p>';
+                strXml += '			<a:pPr algn="ctr" rtl="0">';
+                strXml += "\t\t\t\t<a:defRPr>";
+                strXml += "\t\t\t\t\t<a:solidFill>";
+                strXml += "\t\t\t\t\t\t" + createColorElement(segment.text.fill.color ? (segment.text.fill.color || 'FFFFFF') : (chartExObject.opts.sunburst.text.fill.color ? (chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF'));
+                strXml += "\t\t\t\t\t</a:solidFill>";
+                strXml += "\t\t\t\t</a:defRPr>";
+                strXml += '			</a:pPr>';
+                strXml += '			<a:r>';
+                strXml += "\t\t\t\t<a:rPr lang=\"de-DE\" sz=\"" + segmentFontSize + "\" b=\"0\" i=\"0\" u=\"none\" strike=\"noStrike\" baseline=\"0\">";
+                strXml += "\t\t\t\t\t<a:solidFill>";
+                strXml += "\t\t\t\t\t\t" + createColorElement(segment.text.fill.color ? (segment.text.fill.color || 'FFFFFF') : (chartExObject.opts.sunburst.text.fill.color ? (chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF'));
+                strXml += "\t\t\t\t\t</a:solidFill>";
+                strXml += "\t\t\t\t\t<a:latin typeface=\"Calibri\" panose=\"020F0502020204030204\"/>";
+                strXml += "\t\t\t\t</a:rPr>";
+                strXml += "\t\t\t\t<a:t>" + encodeXmlEntities(label) + "</a:t>";
+                strXml += '			</a:r>';
+                strXml += '		</a:p>';
+                strXml += '	</cx:txPr>';
+                strXml += xmlForDataLabelVisibility;
+                strXml += '</cx:dataLabel>';
+            }
+        });
+    }
     strXml += '     </cx:dataLabels>';
     strXml += '     <cx:dataId val="0"/>';
     strXml += '    </cx:series>';
@@ -6527,6 +6691,50 @@ function makeXmlChartEx(chartExObject) {
     strXml += ' </cx:chart>';
     strXml += '</cx:chartSpace>';
     return strXml;
+}
+function getXmlSegmentForDataLabelVisibility(segment, globalCategoryVisibility, globalValueVisibility, globalSeriesNameVisibility, globalSeparator) {
+    // segment label visibility
+    var segmentCategoryVisibility = (segment.dataLabel && segment.dataLabel.visibility
+        && typeof segment.dataLabel.visibility.category === 'boolean')
+        ? (!segment.dataLabel.visibility.category ? 0 : 1) : globalCategoryVisibility;
+    var segmentValueVisibility = (segment.dataLabel && segment.dataLabel.visibility
+        && typeof segment.dataLabel.visibility.value === 'boolean')
+        ? (!segment.dataLabel.visibility.value ? 0 : 1) : globalValueVisibility;
+    var segmentSeriesNameVisibility = (segment.dataLabel && segment.dataLabel.visibility
+        && typeof segment.dataLabel.visibility.series === 'boolean')
+        ? (!segment.dataLabel.visibility.series ? 0 : 1) : globalSeriesNameVisibility;
+    if (segmentCategoryVisibility !== null || segmentValueVisibility != null || segmentSeriesNameVisibility != null) {
+        return "  <cx:visibility"
+            + (" seriesName=\"" + (segmentSeriesNameVisibility !== null ? segmentSeriesNameVisibility : 0) + "\"") // default: series name not visible
+            + (" categoryName=\"" + (segmentCategoryVisibility !== null ? segmentCategoryVisibility : 1) + "\"") // default: category visible
+            + (" value=\"" + (segmentValueVisibility !== null ? segmentValueVisibility : 0) + "\"") // default: value not visible
+            + "/>"
+            + ("  <cx:separator>" + (segment.dataLabel.separator ? encodeXmlEntities(segment.dataLabel.separator) : globalSeparator) + "</cx:separator>");
+    }
+    return '';
+}
+function hasLabel(segment, globalCategoryVisibility, globalValueVisibility, globalSeriesNameVisibility) {
+    // segment label visibility
+    var segmentCategoryVisibility = (segment.dataLabel && segment.dataLabel.visibility
+        && typeof segment.dataLabel.visibility.category === 'boolean')
+        ? (!segment.dataLabel.visibility.category ? 0 : 1) : globalCategoryVisibility;
+    var segmentValueVisibility = (segment.dataLabel && segment.dataLabel.visibility
+        && typeof segment.dataLabel.visibility.value === 'boolean')
+        ? (!segment.dataLabel.visibility.value ? 0 : 1) : globalValueVisibility;
+    var segmentSeriesNameVisibility = (segment.dataLabel && segment.dataLabel.visibility
+        && typeof segment.dataLabel.visibility.series === 'boolean')
+        ? (!segment.dataLabel.visibility.series ? 0 : 1) : globalSeriesNameVisibility;
+    return (segmentCategoryVisibility === 1 || segmentCategoryVisibility === null)
+        && (segmentValueVisibility === 1 || segmentValueVisibility === null)
+        && (segmentSeriesNameVisibility === 1 || segmentSeriesNameVisibility === null);
+}
+function getXmlForSegmentDataLabelNumFmt(segment, globalNumFmt) {
+    var segmentNumFmt = (segment.dataLabel && segment.dataLabel.numFmt)
+        ? segment.dataLabel.numFmt : globalNumFmt; // string
+    if (segmentNumFmt !== null) {
+        return "      <cx:numFmt formatCode=\"" + encodeXmlEntities(segmentNumFmt) + "\" sourceLinked=\"0\"/>";
+    }
+    return '';
 }
 /**
  * Replace special XML characters with HTML-encoded strings
@@ -7289,7 +7497,7 @@ function createSvgPngPreview(rel) {
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-var VERSION = '3.7.0-beta';
+var VERSION = '3.8.0-beta';
 var PptxGenJS = /** @class */ (function () {
     function PptxGenJS() {
         var _this = this;

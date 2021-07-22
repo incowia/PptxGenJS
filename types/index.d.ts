@@ -7,6 +7,8 @@
 //                 Stephen Cronin <https://github.com/cronin4392>
 // TypeScript Version: 3.x
 
+import {ChartExOpts, SunburstChartExData} from "../src/core-interfaces";
+
 export as namespace PptxGenJS
 
 export default PptxGenJS
@@ -2202,6 +2204,7 @@ declare namespace PptxGenJS {
 	}
 	export interface PresSlide {
 		addChart: Function
+		addChartEx: Function
 		addImage: Function
 		addMedia: Function
 		addNotes: Function
@@ -2298,6 +2301,13 @@ declare namespace PptxGenJS {
 		 * @type {Function}
 		 */
 		addChart(type: CHART_NAME | IChartMulti[], data: any[], options?: IChartOpts): Slide
+		/**
+		 * Add extended chart to Slide
+		 * @param {SunburstChartExData} data - data object
+		 * @param {ChartExOpts} options - extended chart options
+		 * @return {Slide} this Slide
+		 */
+		addChartEx(data: SunburstChartExData | any, options: ChartExOpts): Slide
 		/**
 		 * Add image to Slide
 		 * @param {ImageProps} options - image options
