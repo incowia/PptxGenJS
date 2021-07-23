@@ -537,17 +537,21 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 				strXml += '		</a:bodyPr>'
 				strXml += '		<a:lstStyle/>'
 				strXml += '		<a:p>'
-				strXml += '			<a:r>'
-				strXml += `				<a:t>${encodeXmlEntities(label)}</a:t>`
-				strXml += '			</a:r>'
+				if (hasNoLabel(segment, globalCategoryVisibility, globalValueVisibility, globalSeriesNameVisibility)) {
+					strXml += '			<a:endParaRPr/>'
+				} else {
+					strXml += '			<a:r>'
+					strXml += `				<a:t>${encodeXmlEntities(label)}</a:t>`
+					strXml += '			</a:r>'
+				}
 				strXml += '		</a:p>'
 				strXml += '	</cx:txPr>'
 				strXml += xmlForDataLabelVisibility
 				strXml += '</cx:dataLabel>'
 			}
+			const dataPointIndex = getDataPointIndex(segment, rowsData); // index in unique labels per rows - needed for segment text color
 			// label color
 			if (segment.text && (segment.text.fill || (segment.dataLabel && segment.dataLabel.fontSize))) {
-				const dataPointIndex = getDataPointIndex(segment, rowsData); // index in unique labels per rows - needed for segment text color
 				const segmentFontSize = (segment.dataLabel) ? (segment.dataLabel.fontSize ? (segment.dataLabel.fontSize * 100) : fontSize) : fontSize
 				strXml += `<cx:dataLabel idx="${dataPointIndex}">`
 				// segment label numFmt
@@ -574,6 +578,10 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 				strXml += '			</a:r>'
 				strXml += '		</a:p>'
 				strXml += '	</cx:txPr>'
+				strXml += xmlForDataLabelVisibility
+				strXml += '</cx:dataLabel>'
+			} else {
+				strXml += `<cx:dataLabel idx="${dataPointIndex}">`
 				strXml += xmlForDataLabelVisibility
 				strXml += '</cx:dataLabel>'
 			}
@@ -609,25 +617,23 @@ function getXmlSegmentForDataLabelVisibility(segment, globalCategoryVisibility, 
 			+ ` categoryName="${segmentCategoryVisibility !== null ? segmentCategoryVisibility : 1}"` // default: category visible
 			+ ` value="${segmentValueVisibility !== null ? segmentValueVisibility : 0}"` // default: value not visible
 			+ `/>`
-			+ `  <cx:separator>${segment.dataLabel.separator ? encodeXmlEntities(segment.dataLabel.separator) : globalSeparator}</cx:separator>`
+			+ `  <cx:separator>${segment.dataLabel && segment.dataLabel.separator ? encodeXmlEntities(segment.dataLabel.separator) : globalSeparator}</cx:separator>`
 	}
 	return ''
 }
 
-function hasLabel(segment, globalCategoryVisibility, globalValueVisibility, globalSeriesNameVisibility) {
+function hasNoLabel(segment, globalCategoryVisibility, globalValueVisibility, globalSeriesNameVisibility) {
 	// segment label visibility
 	const segmentCategoryVisibility = (segment.dataLabel && segment.dataLabel.visibility
 		&& typeof segment.dataLabel.visibility.category === 'boolean')
-		? (!segment.dataLabel.visibility.category ? 0 : 1) : globalCategoryVisibility
+		? (!segment.dataLabel.visibility.category ? 0 : 1) : (globalCategoryVisibility === null ? 1 : globalCategoryVisibility)
 	const segmentValueVisibility = (segment.dataLabel && segment.dataLabel.visibility
 		&& typeof segment.dataLabel.visibility.value === 'boolean')
-		? (!segment.dataLabel.visibility.value ? 0 : 1) : globalValueVisibility
+		? (!segment.dataLabel.visibility.value ? 0 : 1) : (globalValueVisibility === null ? 0 : globalValueVisibility)
 	const segmentSeriesNameVisibility = (segment.dataLabel && segment.dataLabel.visibility
 		&& typeof segment.dataLabel.visibility.series === 'boolean')
-		? (!segment.dataLabel.visibility.series ? 0 : 1) : globalSeriesNameVisibility
-	return (segmentCategoryVisibility === 1 || segmentCategoryVisibility === null)
-		&& (segmentValueVisibility === 1 || segmentValueVisibility === null)
-		&& (segmentSeriesNameVisibility === 1 || segmentSeriesNameVisibility === null)
+		? (!segment.dataLabel.visibility.series ? 0 : 1) : (globalSeriesNameVisibility === null ? 0 : globalSeriesNameVisibility)
+	return (segmentCategoryVisibility === 0 && segmentValueVisibility === 0 && segmentSeriesNameVisibility === 0)
 }
 
 function getXmlForSegmentDataLabelNumFmt(segment, globalNumFmt) {

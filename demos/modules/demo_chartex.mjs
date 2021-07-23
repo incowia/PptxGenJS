@@ -27,6 +27,7 @@ const data2 = {
 		// segment size is sum of values from children (except leafs)
 		[ 'Branch 1',        '',        '',    0 ],
 		[ 'Branch 1',  'Root 1',        '',    0 ],
+		[ 'Branch 1',  'Root 1',        '',    0 ],
 		[ 'Branch 1',  'Root 1',  'Leaf 1',   22 ],
 		[ 'Branch 1',  'Root 1',  'Leaf 2',   12 ],
 		[ 'Branch 1',  'Root 1',  'Leaf 3',   18 ],
@@ -222,7 +223,7 @@ function genSlide03(pptx) {
 					path: ['Branch 1', 'Root 1'],
 					dataLabel: { visibility: { category: false, value: false } },
 					fill: { type: 'solid', color: 'FF0000' },
-					text: { fill: { type: 'solid', color: 'FF0000' } }
+					text: { fill: { type: 'solid', color: '000000' } }
 				}, {
 					path: ['Branch 2', 'Root 4', 'Leaf 11'],
 					fill: { type: 'solid', color: 'FFFFFF' },
@@ -261,6 +262,9 @@ function genSlide03(pptx) {
 					path: ['Branch 1', 'Root 1'],
 					dataLabel: { visibility: { category: false, value: false } },
 					fill: { type: 'solid', color: '00FF00' }
+				}, {
+					path: ['Branch 1', 'Root 1', 'Leaf 2'],
+					fill: { type: 'solid', color: 'FF0000' }
 				}, {
 					path: ['Branch 2', 'Root 4', 'Leaf 11'],
 					fill: { type: 'solid', color: 'FFFFFF' },
