@@ -66,6 +66,7 @@ export function genSlides_ChartEx(pptx) {
 	genSlide01(pptx);
 	genSlide02(pptx);
 	genSlide03(pptx);
+	// genSlide04(pptx);
 }
 
 function initTestData() {
@@ -243,6 +244,137 @@ function genSlide03(pptx) {
 		w: 6.0,
 		h: 6.0,
 		sunburst: {
+			text: {
+				fontSize: 8
+			},
+			dataLabel: {
+				numFmt: '0;0', // shows absolute number only
+				visibility: {
+					category: true,
+					value: true
+				},
+				separator: '\n'
+			},
+			segments: [
+				{
+					path: ['Branch 3'],
+					dataLabel: { numFmt: '"foo";"foo"' /* static string */ }
+				}, {
+					path: ['Branch 2'],
+					dataLabel: { visibility: { category: false } }
+				}, {
+					path: ['Branch 1'],
+					text: { fill: { type: 'solid', color: '000000' }, fontSize: 10 }
+				}, {
+					path: ['Branch 1', 'Root 1'],
+					dataLabel: { visibility: { category: false, value: false } },
+					fill: { type: 'solid', color: '00FF00' }
+				}, {
+					path: ['Branch 1', 'Root 1', 'Root 1.1', 'Leaf 2'],
+					fill: { type: 'solid', color: 'FF0000' }
+				}, {
+					path: ['Branch 2', 'Root 4', 'Root 4.2', 'Leaf 11'],
+					fill: { type: 'solid', color: 'FFFFFF' },
+					line: { width: 1, color: '000000' },
+					text: { fill: { type: 'solid', color: '000000' }, fontSize: 10 },
+					dataLabel: {
+						separator: ': '
+					}
+				}
+			]
+		}
+	};
+	const data2a = {
+		name: 'Data series 1',
+		values: [
+			// first tree
+			[ 'Branch 1',       '',         '',       '', 0 ],
+			[ 'Branch 1', 'Root 1',         '',       '', 0 ],
+			[ 'Branch 1', 'Root 1', 'Root 1.1',       '', 0 ],
+			[ 'Branch 1', 'Root 1', 'Root 1.1', 'Leaf 1', 22 ],
+			[ 'Branch 1', 'Root 1', 'Root 1.1', 'Leaf 2', 12 ],
+			[ 'Branch 1', 'Root 1',         '',       '', 0 ],
+			[ 'Branch 1', 'Root 1', 'Root 1.2',       '', 0 ],
+			[ 'Branch 1', 'Root 1', 'Root 1.2', 'Leaf 3', 18 ],
+			[ 'Branch 1', 'Root 2',         '',       '', 0 ],
+			[ 'Branch 1', 'Root 2', 'Root 2.1',       '', 0 ],
+			[ 'Branch 1', 'Root 2', 'Root 2.1', 'Leaf 4', 87 ],
+			[ 'Branch 1', 'Root 2',   'Leaf 5',       '', 88 ],
+			[ 'Branch 1', 'Leaf 6',         '',       '', 17 ],
+			[ 'Branch 1', 'Leaf 7',         '',       '', 14 ],
+			// second tree
+			[ 'Branch 2',       '',         '',       '', -138 ],
+			[ 'Branch 2', 'Root 3',         '',       '', -25 ],
+			[ 'Branch 2', 'Root 3',   'Leaf 8',       '', 25 ],
+			[ 'Branch 2',       '',         '',       '', 0 ],
+			[ 'Branch 2', 'Leaf 9',         '',       '', 16 ],
+			[ 'Branch 2', 'Root 4',         '',       '', -113 ],
+			[ 'Branch 2', 'Root 4', 'Root 4.1',       '', -24 ],
+			[ 'Branch 2', 'Root 4', 'Root 4.1', 'Leaf 10', 24 ],
+			[ 'Branch 2', 'Root 4', 'Root 4.2',       '', -89 ],
+			[ 'Branch 2', 'Root 4', 'Root 4.2', 'Leaf 11', 89 ],
+			// third tree
+			[ 'Branch 3', '', '', '', 30 ],
+			[ 'Branch 3', 'Root 5', '', '', -25 ],
+			[ 'Branch 3', 'Root 5', 'Leaf 12', '', 16 ],
+			[ 'Branch 3', 'Root 5', 'Leaf 13', '', 19 ],
+			[ 'Branch 3', 'Root 6', 'Leaf 14', '', 86 ],
+			[ 'Branch 3', 'Root 6', 'Leaf 15', '', 23 ],
+			[ 'Branch 3', 'Leaf 16', '', '', 21 ]
+		]
+	};
+	slide.addChartEx(data2a, chartEx6Options);
+}
+
+// Slide 4: More than 3 rings
+function genSlide04(pptx) {
+	let slide = pptx.addSlide({ sectionTitle: "Extended Charts" });
+	slide.addNotes("API Docs: https://gitbrent.github.io/PptxGenJS/docs/api-chartexs.html");
+	slide.addTable([[{ text: "Extended Chart Examples: Sunburst Chart - More than 3 rings", options: BASE_TEXT_OPTS_L }, BASE_TEXT_OPTS_R]], BASE_TABLE_OPTS);
+
+	const data7 = {
+		name: 'Data series 1',
+		values: [
+			// first tree
+			[ 'Branch 1', 'Root 1', 'Root 1.1', 'Leaf 1', 22 ],
+			[ 'Branch 1', 'Root 1', 'Root 1.1', 'Leaf 2', 12 ],
+			[ 'Branch 1', 'Root 1', 'Root 1.2', 'Leaf 3', 18 ],
+			[ 'Branch 1', 'Root 2', 'Root 2.1', 'Leaf 4', 87 ],
+			[ 'Branch 1', 'Root 2', '', 'Leaf 5', 88 ],
+			[ 'Branch 1', 'Leaf 6', '', '', 17 ],
+			[ 'Branch 1', 'Leaf 7', '', '', 14 ],
+			// second tree
+			[ 'Branch 2', 'Root 3', 'Leaf 8', '', 25 ],
+			[ 'Branch 2', 'Leaf 9', '', '', 16 ],
+			[ 'Branch 2', 'Root 4', 'Root 4.1', 'Leaf 10', 24 ],
+			[ 'Branch 2', 'Root 4', 'Root 4.2', 'Leaf 11', 89 ],
+			// third tree
+			[ 'Branch 3', 'Root 5', 'Leaf 12', '', 16 ],
+			[ 'Branch 3', 'Root 5', 'Leaf 13', '', 19 ],
+			[ 'Branch 3', 'Root 6', 'Leaf 14', '', 86 ],
+			[ 'Branch 3', 'Root 6', 'Leaf 15', '', 23 ],
+			[ 'Branch 3', 'Leaf 16', '', '', 21 ]
+		]
+	};
+	const chartEx7Options = {
+		type: pptx.ChartExType.sunburst,
+		x: 0.5,
+		y: 1.0,
+		w: 6.0,
+		h: 6.0,
+	};
+	slide.addChartEx(data7, chartEx7Options);
+
+	const chartEx8Options = {
+		type: pptx.ChartExType.sunburst,
+		x: 6.7,
+		y: 1.0,
+		w: 6.0,
+		h: 6.0,
+		sunburst: {
+			text: {
+				fontSize: 9
+			},
 			dataLabel: {
 				numFmt: '0;0', // shows absolute number only
 				visibility: {
@@ -269,15 +401,17 @@ function genSlide03(pptx) {
 					path: ['Branch 2', 'Root 4', 'Leaf 11'],
 					fill: { type: 'solid', color: 'FFFFFF' },
 					line: { width: 1, color: '000000' },
-					text: { fill: { type: 'solid', color: '000000' } },
+					text: {
+						fill: { type: 'solid', color: '000000' } ,
+						fontSize: 8
+					},
 					dataLabel: {
-						fontSize: 8,
 						separator: ': '
 					}
 				}
 			]
 		}
 	};
-	slide.addChartEx(data2, chartEx6Options);
-
+	slide.addChartEx(data2, chartEx8Options);
 }
+

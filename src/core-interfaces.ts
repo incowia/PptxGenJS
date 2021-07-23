@@ -1359,6 +1359,8 @@ export type SunburstChartExProps = {
 	text?: {
 		fill?: ShapeFillProps
 		line?: ShapeLineProps
+		// default 9
+		fontSize?: number
 	}
 	dataLabel?: {
 		// default: ''
@@ -1371,7 +1373,6 @@ export type SunburstChartExProps = {
 			// default: false
 			value?: boolean
 		}
-		fontSize?: number
 		// default: ', '
 		separator?: string
 	}

@@ -431,7 +431,7 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 	strXml += '      </cx:txData>'
 	strXml += '     </cx:tx>'
 	// global line colors
-	if (chartExObject.opts.sunburst.line) {
+	if (chartExObject.opts.sunburst && chartExObject.opts.sunburst.line) {
 		strXml += '     <cx:spPr>'
 		if (chartExObject.opts.sunburst.line.width) {
 			strXml += `      <a:ln w="${chartExObject.opts.sunburst.line.width * 12700}">`
@@ -451,9 +451,11 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 			if (segment.fill || segment.line || segment.text) {
 				strXml += `<cx:dataPt idx="${dataPointIndex}">`
 				strXml += '	<cx:spPr>'
-				strXml += '		<a:solidFill>'
-				strXml += `			${createColorElement(segment.fill.color)}`
-				strXml += '		</a:solidFill>'
+				if (segment.fill && segment.fill.color) {
+					strXml += '		<a:solidFill>'
+					strXml += `			${createColorElement(segment.fill.color)}`
+					strXml += '		</a:solidFill>'
+				}
 				if (segment.line || chartExObject.opts.sunburst.line) {
 					const lineWidth = segment.line ?
 						(segment.line.width ? (segment.line.width * 12700) :
@@ -475,14 +477,14 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 	}
 	strXml += '     <cx:dataLabels pos="ctr">'
 	// global data label format
-	const globalNumFmt = (chartExObject.opts.sunburst.dataLabel && chartExObject.opts.sunburst.dataLabel.numFmt)
+	const globalNumFmt = (chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel && chartExObject.opts.sunburst.dataLabel.numFmt)
 		? chartExObject.opts.sunburst.dataLabel.numFmt : null // string
 	if (globalNumFmt !== null) {
 		strXml += `      <cx:numFmt formatCode="${encodeXmlEntities(globalNumFmt)}" sourceLinked="0"/>`
 	}
 	// global text
-	const fontSize = (chartExObject.opts.sunburst.dataLabel)
-		? (chartExObject.opts.sunburst.dataLabel.fontSize ? (chartExObject.opts.sunburst.dataLabel.fontSize * 100) : (DEFAULT_DATA_LABEL_FONT_SIZE * 100)) : (DEFAULT_DATA_LABEL_FONT_SIZE * 100)
+	const fontSize = (chartExObject.opts.sunburst && chartExObject.opts.sunburst.text)
+		? (chartExObject.opts.sunburst.text.fontSize ? (chartExObject.opts.sunburst.text.fontSize * 100) : (DEFAULT_DATA_LABEL_FONT_SIZE * 100)) : (DEFAULT_DATA_LABEL_FONT_SIZE * 100)
 	strXml += `      <cx:txPr>`
 	strXml += `       <a:bodyPr spcFirstLastPara="1" vertOverflow="ellipsis" horzOverflow="overflow" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="ctr" anchorCtr="1"/>`
 	strXml += `       <a:lstStyle/>`
@@ -491,7 +493,7 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 	strXml += `         <a:defRPr sz="${fontSize}"/>`
 	strXml += `        </a:pPr>`
 	strXml += `        <a:endParaRPr lang="de-DE" sz="${fontSize}" b="0" i="0" u="none" strike="noStrike" baseline="0">`
-	if (chartExObject.opts.sunburst.text && chartExObject.opts.sunburst.text.fill) {
+	if (chartExObject.opts.sunburst && chartExObject.opts.sunburst.text && chartExObject.opts.sunburst.text.fill) {
 		strXml += `         <a:solidFill>`
 		strXml += `          ${createColorElement(chartExObject.opts.sunburst.text.fill.color ? (chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF')}`
 		strXml += `         </a:solidFill>`
@@ -510,7 +512,7 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 	const globalSeriesNameVisibility = (chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.visibility
 		&& typeof chartExObject.opts.sunburst.dataLabel.visibility.series === 'boolean')
 		? (!chartExObject.opts.sunburst.dataLabel.visibility.series ? 0 : 1) : null
-	const globalSeparator = chartExObject.opts.sunburst.dataLabel.separator ? encodeXmlEntities(chartExObject.opts.sunburst.dataLabel.separator) : ', '
+	const globalSeparator = (chartExObject.opts.sunburst && chartExObject.opts.sunburst.dataLabel.separator) ? encodeXmlEntities(chartExObject.opts.sunburst.dataLabel.separator) : ', '
 	if (globalCategoryVisibility !== null || globalValueVisibility != null || globalSeriesNameVisibility != null) {
 		strXml += `      <cx:visibility`
 			+ ` seriesName="${globalSeriesNameVisibility !== null ? globalSeriesNameVisibility : 0}"` // default: series name not visible
@@ -551,8 +553,8 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 			}
 			const dataPointIndex = getDataPointIndex(segment, rowsData); // index in unique labels per rows - needed for segment text color
 			// label color
-			if (segment.text && (segment.text.fill || (segment.dataLabel && segment.dataLabel.fontSize))) {
-				const segmentFontSize = (segment.dataLabel) ? (segment.dataLabel.fontSize ? (segment.dataLabel.fontSize * 100) : fontSize) : fontSize
+			if (segment.text && (segment.text.fill || segment.text.fontSize)) {
+				const segmentFontSize = (segment.text.fontSize ? (segment.text.fontSize * 100) : fontSize)
 				strXml += `<cx:dataLabel idx="${dataPointIndex}">`
 				// segment label numFmt
 				strXml += xmlForDataLabelNumFmt
@@ -563,14 +565,14 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 				strXml += '			<a:pPr algn="ctr" rtl="0">'
 				strXml += `				<a:defRPr>`
 				strXml += `					<a:solidFill>`
-				strXml += `						${createColorElement(segment.text.fill.color ? (segment.text.fill.color || 'FFFFFF') : (chartExObject.opts.sunburst.text.fill.color ? ( chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF'))}`
+				strXml += `						${createColorElement(segment.text.fill.color ? (segment.text.fill.color || 'FFFFFF') : ((chartExObject.opts.sunburst && chartExObject.opts.sunburst.text.fill.color) ? ( chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF'))}`
 				strXml += `					</a:solidFill>`
 				strXml += `				</a:defRPr>`
 				strXml += '			</a:pPr>'
 				strXml += '			<a:r>'
 				strXml += `				<a:rPr lang="de-DE" sz="${segmentFontSize}" b="0" i="0" u="none" strike="noStrike" baseline="0">`
 				strXml += `					<a:solidFill>`
-				strXml += `						${createColorElement(segment.text.fill.color ? (segment.text.fill.color || 'FFFFFF') : (chartExObject.opts.sunburst.text.fill.color ? ( chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF'))}`
+				strXml += `						${createColorElement(segment.text.fill.color ? (segment.text.fill.color || 'FFFFFF') : ((chartExObject.opts.sunburst && chartExObject.opts.sunburst.text.fill.color) ? ( chartExObject.opts.sunburst.text.fill.color || 'FFFFFF') : 'FFFFFF'))}`
 				strXml += `					</a:solidFill>`
 				strXml += `					<a:latin typeface="Calibri" panose="020F0502020204030204"/>`
 				strXml += `				</a:rPr>`
@@ -582,6 +584,7 @@ export function makeXmlChartEx(chartExObject: ISlideRelChartEx): string {
 				strXml += '</cx:dataLabel>'
 			} else {
 				strXml += `<cx:dataLabel idx="${dataPointIndex}">`
+				strXml += xmlForDataLabelNumFmt
 				strXml += xmlForDataLabelVisibility
 				strXml += '</cx:dataLabel>'
 			}
