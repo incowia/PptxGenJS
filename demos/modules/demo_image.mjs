@@ -3,7 +3,7 @@
  * AUTH: Brent Ely (https://github.com/gitbrent/)
  * DESC: Common test/demo slides for all library features
  * DEPS: Used by various demos (./demos/browser, ./demos/node, etc.)
- * VER.: 3.7.0
+ * VER.: 3.8.0-beta
  * BLD.: 20210509
  */
 
